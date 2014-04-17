@@ -1,4 +1,9 @@
-urlparse
-========
+Compile
+=======
+To compile the example program simply run the included build.sh script.
 
-A lib inspired from the urlparse library of python for C++
+
+Feedback
+========
+Feedback and critique is always welcome, find my email address on my github
+profile located at https://github.com/Daapii
