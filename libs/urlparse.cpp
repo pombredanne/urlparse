@@ -140,6 +140,7 @@ void UrlParse::defrag(string url, string &new_url, string &fragment)
     url_object.scheme = getScheme(url);
     url_object.netloc = getNetloc(url);
     url_object.path = getPath(url);
+    url_object.query = getQuery(url);
     new_url = getUrl(url_object);
     fragment = getFragment(url);
 }
