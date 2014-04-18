@@ -86,6 +86,38 @@ string UrlParse::join(string url, string location)
         return new_url;
     }
 
+    // Handle locations which do not start with root and do not start with step
+    if(location.substr(0, 2).compare("..") != 0)
+    {
+        int pos = parsed.path.rfind("/");
+        // WHen the passed URL's path is empty
+        if(pos == -1 || pos > parsed.path.length())
+        {
+            parsed.fragment = "";
+            parsed.query = "";
+            if(location.substr(0, 1).compare("/") != 0)
+            {
+                location = "/" + location;
+            }
+            parsed.path = parsed.path.substr(0, pos) + location;
+            return parsed.getUrl();
+        }
+
+        string new_path = parsed.path.substr(0, pos);
+        if(new_path.substr(new_path.length()).compare("/") != 0)
+        {
+            new_path += "/";
+        }
+
+        new_path += location;
+
+        parsed.fragment = "";
+        parsed.query = "";
+        parsed.path = new_path;
+        return parsed.getUrl();
+    }
+
+
     /* Handle relative stepping locations:
        For each step (../ or ..\) we remove one level inside the URL, repeat
        the process of removing one step after the other will leave us with
