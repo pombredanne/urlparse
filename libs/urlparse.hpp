@@ -29,11 +29,14 @@ public:
     void defrag(std::string url, std::string &new_url, std::string &fragment);
 
 private:
+    void normalJoin(ParseResult &parsed, std::string &location);
+    void stepRelative(ParseResult &parsed, std::string &location);
     std::string getScheme(std::string &url);
     std::string getNetloc(std::string &url);
     std::string getPath(std::string &url);
     std::string getQuery(std::string &url);
     std::string getFragment(std::string &url);
+
 
 };
 

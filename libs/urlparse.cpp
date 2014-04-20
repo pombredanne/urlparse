@@ -68,60 +68,88 @@ string UrlParse::join(string url, string location)
         url = url.substr(0, url.length() - 1);
     }
 
+    /* Parse the URL and remove query and fragment, the reason for that is that
+       we no longer will need the two values, the new URL will not have the same
+       attributes as the current ones and thus delete them. */
     ParseResult parsed = parse(url);
+    parsed.query = "";
+    parsed.fragment = "";
 
-    // Handles root path URLs, either locations starting with ./ or /
     if(location.substr(0, 1).compare("/") == 0)
     {
         /* When the passed location starts with '/' the destination will always
-           be relative to the root URL. */
-        string new_url = parsed.scheme + "://" + parsed.netloc + location;
-        return new_url;
+           be relative to the root URL, thus a simple removal of the old path
+           will suffice. */
+        parsed.path = location;
     }
     else if(location.substr(0, 2).compare("./") == 0)
     {
-        /* For some reason some webdevelopers use the current directory indicator
-           (.) in front of the root path, this parses the path accordingly. */
-        string new_url = parsed.scheme + "://" + parsed.netloc + location.substr(1);
-        return new_url;
+        // For locations starting with "./"
+        parsed.path = location.substr(1);
+    }
+    else if(location.substr(0, 2).compare("..") != 0)
+    {
+        // For locations starting without step, or any of the root paths
+        normalJoin(parsed, location);
+    }
+    else if(location.substr(0, 2).compare("..") == 0)
+    {
+        // For locations which are relative, ergo starting with "../"
+        stepRelative(parsed, location);
     }
 
-    // Handle locations which do not start with root and do not start with step
-    if(location.substr(0, 2).compare("..") != 0)
-    {
-        int pos = parsed.path.rfind("/");
-        // WHen the passed URL's path is empty
-        if(pos == -1 || pos > parsed.path.length())
-        {
-            parsed.fragment = "";
-            parsed.query = "";
-            if(location.substr(0, 1).compare("/") != 0)
-            {
-                location = "/" + location;
-            }
-            parsed.path = parsed.path.substr(0, pos) + location;
-            return parsed.getUrl();
-        }
+    return getUrl(parsed);
+}
 
+// Splits a passed URL at the fragment identifier into two strings.
+void UrlParse::defrag(string url, string &new_url, string &fragment)
+{
+    ParseResult url_object;
+    url_object.scheme = getScheme(url);
+    url_object.netloc = getNetloc(url);
+    url_object.path = getPath(url);
+    url_object.query = getQuery(url);
+    new_url = getUrl(url_object);
+    fragment = getFragment(url);
+}
+
+/*
+   ============================================================================
+   ======================= End of public methods ==============================
+   ============================================================================
+*/
+
+// Joins the referenced location with the parsed object's path
+void UrlParse::normalJoin(ParseResult &parsed, string &location)
+{
+    int pos = parsed.path.rfind("/");
+    // When the passed URL's path is empty
+    if(pos == -1 || pos > parsed.path.length())
+    {
+        /* Since the passed URL's path is empty we need to check if the
+           referenced location contains a leading slash or not and add it if
+           needed. */
+        if(location.substr(0, 1).compare("/") != 0)
+        {
+            location = "/" + location;
+        }
+        parsed.path = parsed.path.substr(0, pos) + location;
+    }
+    else
+    {
+        // TODO: Figure out what the fuck I was doing here
         string new_path = parsed.path.substr(0, pos);
         if(new_path.substr(new_path.length()).compare("/") != 0)
         {
             new_path += "/";
         }
 
-        new_path += location;
-
-        parsed.fragment = "";
-        parsed.query = "";
-        parsed.path = new_path;
-        return parsed.getUrl();
+        parsed.path = new_path + location;
     }
+}
 
-
-    /* Handle relative stepping locations:
-       For each step (../ or ..\) we remove one level inside the URL, repeat
-       the process of removing one step after the other will leave us with
-       the level we want to access with the passed path. */
+void UrlParse::stepRelative(ParseResult &parsed, string &location)
+{
     while(location.substr(0, 2).compare("..") == 0)
     {
         if(parsed.path.compare("/") == 0)
@@ -160,29 +188,8 @@ string UrlParse::join(string url, string location)
     }
 
     // The fragment and query of the URL are now obsolete, thus they are removed
-    parsed.fragment = "";
-    parsed.query = "";
-    return getUrl(parsed) + location;
+    parsed.path = location;
 }
-
-// Splits a passed URL at the fragment identifier into two strings.
-void UrlParse::defrag(string url, string &new_url, string &fragment)
-{
-    ParseResult url_object;
-    url_object.scheme = getScheme(url);
-    url_object.netloc = getNetloc(url);
-    url_object.path = getPath(url);
-    url_object.query = getQuery(url);
-    new_url = getUrl(url_object);
-    fragment = getFragment(url);
-}
-
-/*
-   ============================================================================
-   ======================= End of public methods ==============================
-   ============================================================================
-*/
-
 
 // Returns the scheme of the passed URL if any
 string UrlParse::getScheme(string &url)
