@@ -3,6 +3,10 @@ Urlparse
 This is a lib for C++ inspired from Python's urlparse lib which you can check out [here](https://docs.python.org/2/library/urlparse.html). The lib contains multiple methods to parse and modify all types of URLs, see a complete overview of the methods which are available to you under the [usage section](#usage).
 If you are familiar with the urlparse lib from python this shouldn't take you long to comprehend.
 
+Just in case you don't know how to run this example program, read the [compile](#compile) section and you are ready to see the library in action.
+
+If you encounter any bugs or have feedback to give feel free to do so, contact information can be found in the [feedback](#feedback) section.
+
 Usage
 =====
 
