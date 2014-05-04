@@ -1,11 +1,17 @@
 Urlparse
 ========
-This is a lib for C++ inspired from Python's urlparse lib which you can check out [here](https://docs.python.org/2/library/urlparse.html). The lib contains multiple methods to parse and modify all types of URLs, see a complete overview of the methods which are available to you under the [usage section](#usage).
-If you are familiar with the urlparse lib from python this shouldn't take you long to comprehend.
+This is a lib for C++ inspired from Python's urlparse lib which you can check
+out [here](https://docs.python.org/2/library/urlparse.html). The lib contains
+multiple methods to parse and modify various types of URLs, see a complete
+overview of the methods which are available to you under the [usage section](#usage).
+If you are familiar with the urlparse lib from python this shouldn't take you
+long to comprehend.
 
-Just in case you don't know how to run this example program, read the [compile](#compile) section and you are ready to see the library in action.
+Just in case you don't know how to run this example program, read the
+[compile](#compile) section and you are ready to see the library in action.
 
-If you encounter any bugs or have feedback to give feel free to do so, contact information can be found in the [feedback](#feedback) section.
+If you encounter any bugs or have feedback to give feel free to do so, contact
+information can be found in the [feedback](#feedback) section.
 
 Usage
 =====
@@ -13,7 +19,7 @@ Usage
 Here's a quick overview of the methods available to you:
 
 | Method |
-| :---------------| 
+| :---------------|
 | [UrlParse::parse](#parseresult-urlparseparsestring-url) |
 | [UrlParse::getUrl](#string-urlparsegeturlparseresult-parsed_url) |
 | [ParseResult::getUrl](#string-urlparsegeturlparseresult-parsed_url) |
@@ -25,7 +31,7 @@ Here's a quick overview of the methods available to you:
 ### **ParseResult UrlParse::parse(string url)**
 
 Returns a ParseResult object, it contains multiple parts, the names of these
-parts are: scheme, netloc, path, query and fragment.     
+parts are: scheme, netloc, path, query and fragment.
 An example program:
 
 
@@ -139,7 +145,7 @@ https://evilzone.org/level1/level3/page.php
 
 ### **void UrlParse::defrag(string url, string &new_url, string &fragment)**
 
-Splits the URL at the fragment indicator (#) into two strings,    
+Splits the URL at the fragment indicator (#) into two strings,
 new_url and fragment.
 Example program:
 
@@ -165,7 +171,7 @@ int main(void)
 }
 
 ```
-    
+
 Output of the program:
 
 ```

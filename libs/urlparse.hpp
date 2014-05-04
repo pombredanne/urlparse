@@ -6,6 +6,7 @@
 class ParseResult
 {
 public:
+    ParseResult();
     std::string getUrl(); // Reassembles the parsed URL
     // Example URL: http://evilzone.org/example.php?page=1#important
     std::string scheme; // http

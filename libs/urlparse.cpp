@@ -7,13 +7,36 @@ using namespace std;
 ParseResult UrlParse::parse(string url)
 {
     ParseResult parsed_url;
-    /* Grab *part* from URL, store it, remove it from the passed URL and then
-       return the extracted part - repeat. */
-    parsed_url.scheme = getScheme(url);
-    parsed_url.netloc = getNetloc(url);
-    parsed_url.path = getPath(url);
-    parsed_url.query = getQuery(url);
-    parsed_url.fragment = getFragment(url);
+    if(url.empty())
+    {
+        return parsed_url;
+    }
+
+    if(url.find("://") != string::npos)
+    {
+        parsed_url.scheme = getScheme(url);
+    }
+
+    if(!url.empty())
+    {
+        parsed_url.netloc = getNetloc(url);
+    }
+
+    if(!url.empty() && url.substr(0, 1).compare("/") == 0)
+    {
+        parsed_url.path = getPath(url);
+    }
+
+    if(!url.empty() && url.substr(0, 1).compare("?") == 0)
+    {
+        parsed_url.query = getQuery(url);
+    }
+
+    if(!url.empty() && url.substr(0, 1).compare("#") == 0)
+    {
+        parsed_url.fragment = getFragment(url);
+    }
+
     return parsed_url;
 }
 
@@ -25,9 +48,15 @@ string UrlParse::getUrl(ParseResult parsed_url)
         url += parsed_url.scheme;
         url += "://";
     }
+    if(!parsed_url.netloc.empty())
+    {
+        url += parsed_url.netloc;
+    }
 
-    url += parsed_url.netloc;
-    url += parsed_url.path;
+    if(!parsed_url.path.empty())
+    {
+        url += parsed_url.path;
+    }
 
     if(!parsed_url.query.empty())
     {
@@ -124,7 +153,7 @@ void UrlParse::normalJoin(ParseResult &parsed, string &location)
 {
     int pos = parsed.path.rfind("/");
     // When the passed URL's path is empty
-    if(pos == -1 || pos > parsed.path.length())
+    if(pos == string::npos)
     {
         /* Since the passed URL's path is empty we need to check if the
            referenced location contains a leading slash or not and add it if
@@ -171,7 +200,7 @@ void UrlParse::stepRelative(ParseResult &parsed, string &location)
         for(int i = 0; i < 2; i++)
         {
             int pos = parsed.path.rfind("/");
-            if(pos == -1 || parsed.path.empty())
+            if(pos == string::npos)
             {
                 break;
             }
@@ -197,7 +226,7 @@ string UrlParse::getScheme(string &url)
     int pos = url.find("://");
     /* When the returned position is bigger than the string itself then the sub-
        string was not found. */
-    if(pos > url.length() || pos == -1)
+    if(pos == string::npos)
         return "";
     string scheme = url.substr(0, pos);
     // Remove the extracted scheme from the passed URL (:// will be discarded)
@@ -208,27 +237,48 @@ string UrlParse::getScheme(string &url)
 // Returns the netloc of the passed URL if any
 string UrlParse::getNetloc(string &url)
 {
-    int pos = url.find("/");
-    if(pos > url.length() || pos == -1)
+    // <scheme> :// <netloc>     <path>             <query>  <fragment>
+    // http     :// evilzone.org /path/to/page.html ?query=1 #fragment
+    // http://evilzone.org/path/to/page.html?query=1#fragment
+
+    // i = index of ...
+    int ipath = url.find("/");
+    int iquery = url.find("?");
+    int ifragment = url.find("#");
+    string netloc = "";
+    if(ipath == string::npos && ifragment == string::npos && iquery == string::npos)
     {
+        /*  When the passed URL isn't empty yet and the above markers aren't
+            present and we assume the rest of the URL is the netloc. */
         if(!url.empty())
         {
-            string netloc = url;
+            netloc = url;
             url = "";
-            return netloc;
         }
-        return "";
     }
-    string netloc = url.substr(0, pos);
-    // remove the netloc from the passed URL
-    url = url.substr(pos);
+    else if(ipath != string::npos)
+    {
+        // When the fragment marker is present but no query marker could be found
+        netloc = url.substr(0, ipath);
+        url = url.substr(ipath);
+    }
+    else if(ifragment != string::npos)
+    {
+        netloc = url.substr(0, ifragment);
+        url = url.substr(ifragment);
+    }
+
     return netloc;
 }
 
 // Returns the path of the passed URL if any
 string UrlParse::getPath(string &url)
 {
-    if(url.compare("/") == 0)
+    if(url.empty())
+    {
+        return "";
+    }
+    else if(url.compare("/") == 0)
     {
         url = "";
         return "/";
@@ -236,46 +286,67 @@ string UrlParse::getPath(string &url)
 
     /* Find the position of the query marker, the query marker will be the end
        of the path. */
-    int pos = url.find("?");
-    if(pos == -1)
+    int iquery = url.find("?");
+    int ifragment = url.find("#");
+    string path = "";
+    if(iquery == string::npos && ifragment == string::npos)
     {
-        string path = url;
+        path = url;
         url = "";
-        return path;
     }
-    string path = url.substr(0, pos);
-    url = url.substr(pos);
+    else if(ifragment != string::npos && iquery == string::npos)
+    {
+        // When the fragment marker is present but the query marker is missing
+        path = url.substr(0, ifragment);
+        url = url.substr(ifragment);
+    }
+    else
+    {
+        path = url.substr(0, iquery);
+        url = url.substr(iquery);
+    }
+
+    /* Removes possible duplicates of slashes, this occurs sometimes when a
+       passed link had them already in them, this loop gets rid of them. */
+    int dslash;
+    while((dslash = path.find("//")) != string::npos)
+    {
+        string sub1 = path.substr(0, dslash);
+        string sub2 = path.substr(dslash + 1);
+        path = sub1 + sub2;
+    }
+
     return path;
 }
 
 // Returns the query part of the passed URL if any
 string UrlParse::getQuery(string &url)
 {
-    // Find the index of a fragment
-    int pos = url.find("#");
-    if(url.empty())
+    int ifragment = url.find("#");
+    string query = "";
+    if(ifragment == string::npos)
     {
-        return "";
+        /*  When the URL doesn't contain the fragment marker (#) it consists only
+            of the query. */
+        query = url;
+        url = "";
     }
-    else if(pos == -1)
+    else
     {
-        /* When the URL doesn't contain the fragment marker (#) the url only
-           consists of the query. */
+        query = url.substr(0, ifragment);
+        url = url.substr(ifragment);
+    }
 
-        // Remove the query marker (?)
-        if(url.substr(0, 1).compare("?") == 0)
-        {
-            url = url.substr(1);
-        }
-        return url;
-    }
     // Remove the query marker (?)
     if(url.substr(0, 1).compare("?") == 0)
     {
         url = url.substr(1);
     }
-    string query = url.substr(0, pos - 1);
-    url = url.substr(pos - 1);
+    else if(query.substr(0, 1).compare("?") == 0)
+    {
+        query = query.substr(1);
+    }
+
     return query;
 }
 
@@ -283,7 +354,7 @@ string UrlParse::getQuery(string &url)
 string UrlParse::getFragment(string &url)
 {
     int pos = url.find("#");
-    if(url.empty() || pos == -1)
+    if(url.empty() || pos == string::npos)
     {
         return "";
     }

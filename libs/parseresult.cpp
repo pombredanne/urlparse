@@ -2,6 +2,11 @@
 
 using namespace std;
 
+ParseResult::ParseResult() : scheme(""), netloc(""), path(""), query(""),
+                             fragment("")
+{
+}
+
 // Re-assembles the passed url_t object into it's original state, type string.
 string ParseResult::getUrl()
 {
